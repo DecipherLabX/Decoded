@@ -1,88 +1,78 @@
-import os, random, time, schedule
-from datetime import datetime
+import os
+import random
 import tweepy
 from dotenv import load_dotenv
 from pytrends.request import TrendReq
 
-# -------------------------
-# Load environment variables
-# -------------------------
+# Load secrets
 load_dotenv()
 
-# --------------- AUTH ---------------
-# OAuth 2.0 (User Context)
-client = tweepy.Client(
-    consumer_key=os.getenv("CONSUMER_KEY"),
-    consumer_secret=os.getenv("CONSUMER_SECRET"),
-    access_token=os.getenv("ACCESS_TOKEN"),
-    access_token_secret=os.getenv("ACCESS_TOKEN_SECRET")
-)
-api_v1 = tweepy.API(
-    tweepy.OAuth1UserHandler(
-        os.getenv("CONSUMER_KEY"),
-        os.getenv("CONSUMER_SECRET"),
-        os.getenv("ACCESS_TOKEN"),
-        os.getenv("ACCESS_TOKEN_SECRET")
-    )
-)
+CONSUMER_KEY = os.getenv("CONSUMER_KEY")
+CONSUMER_SECRET = os.getenv("CONSUMER_SECRET")
+ACCESS_TOKEN = os.getenv("ACCESS_TOKEN")
+ACCESS_TOKEN_SECRET = os.getenv("ACCESS_TOKEN_SECRET")
 
-# Initialize Google Trends
-pytrends = TrendReq(hl='en-US', tz=360)
+# Twitter auth
+auth = tweepy.OAuth1UserHandler(
+    CONSUMER_KEY, CONSUMER_SECRET, ACCESS_TOKEN, ACCESS_TOKEN_SECRET
+)
+api = tweepy.API(auth)
 
-caption_templates = [
-    "🔥 {topic} is trending right now! #DecipherLabX #{tag}",
-    "💡 Everyone’s talking about {topic}! What’s your take? #{tag} #Viral",
-    "🚀 {topic} is blowing up online — stay ahead! #{tag} #Growth",
-    "⚡ Trend Alert: {topic}! Join the discussion 👇 #{tag}"
+# Google Trends
+pytrends = TrendReq(hl="en-US", tz=360)
+trending_df = pytrends.trending_searches()
+trending_topics = trending_df[0].tolist()
+
+# Exclude sensitive/religious
+excluded_keywords = ["god", "religion", "islam", "hindu", "muslim", "church", "temple", "spiritual", "bible"]
+filtered_topics = [t for t in trending_topics if all(bad.lower() not in t.lower() for bad in excluded_keywords)]
+
+if not filtered_topics:
+    filtered_topics = ["AI innovation", "Startup growth", "Tech trends", "Automobile", "Motivation", "Funny memes"]
+
+# Pick a topic
+topic = random.choice(filtered_topics)
+
+# Categorize topic for hashtags & emojis
+def categorize_topic(topic):
+    topic_lower = topic.lower()
+    if any(k in topic_lower for k in ["ai", "tech", "robot", "innovation", "startup", "digital"]):
+        return {"emoji": "🤖", "hashtags": "#AI #TechTrends #Innovation"}
+    elif any(k in topic_lower for k in ["business", "startup", "growth", "finance", "marketing"]):
+        return {"emoji": "💼", "hashtags": "#Growth #Startups #BusinessTips"}
+    elif any(k in topic_lower for k in ["movie", "music", "film", "tv", "entertainment", "celebrity"]):
+        return {"emoji": "🎬", "hashtags": "#TrendingNow #Viral #Entertainment"}
+    elif any(k in topic_lower for k in ["travel", "vacation", "lifestyle", "tourism"]):
+        return {"emoji": "✈️", "hashtags": "#Travel #Lifestyle #Wanderlust"}
+    elif any(k in topic_lower for k in ["health", "fitness", "workout", "diet"]):
+        return {"emoji": "💪", "hashtags": "#Health #Fitness #Wellness"}
+    else:
+        return {"emoji": "🔥", "hashtags": "#Viral #Fun #DecipherLabX"}
+
+category = categorize_topic(topic)
+
+# Dynamic captions
+caption_styles = [
+    f"{category['emoji']} {topic} is trending! Join the buzz 🚀 {category['hashtags']}",
+    f"💡 Insight: {topic} is catching attention! {category['emoji']} {category['hashtags']}",
+    f"📈 Trending now: {topic} {category['emoji']} {category['hashtags']}",
+    f"⚡ Hot topic: {topic}! What’s your take? {category['emoji']} {category['hashtags']}"
 ]
 
-def get_trending_topics():
-    try:
-        trending_df = pytrends.trending_searches(pn='global')
-        topics = trending_df[0].tolist()
-        banned = ['religion', 'faith', 'spiritual', 'war', 'violence']
-        clean_topics = [t for t in topics if all(b not in t.lower() for b in banned)]
-        return clean_topics[:10]
-    except Exception as e:
-        print("⚠️ Error fetching trends:", e)
-        return ["AI", "Innovation", "Startups"]
+tweet_text = random.choice(caption_styles)
 
-def build_caption():
-    topic = random.choice(get_trending_topics())
-    tag = topic.replace(" ", "")
-    return random.choice(caption_templates).format(topic=topic, tag=tag), topic
+# Optional media
+media_folder = "media"
+media_files = [os.path.join(media_folder, f) for f in os.listdir(media_folder) if f.endswith((".jpg", ".png", ".mp4"))] if os.path.exists(media_folder) else []
 
-def select_media(topic):
-    media_dir = "media"
-    if not os.path.exists(media_dir):
-        return None
-    files = os.listdir(media_dir)
-    for f in files:
-        if topic.split()[0].lower() in f.lower():
-            return os.path.join(media_dir, f)
-    return os.path.join(media_dir, random.choice(files)) if files else None
+try:
+    if media_files and random.random() < 0.4:
+        media = random.choice(media_files)
+        api.update_status_with_media(status=tweet_text, filename=media)
+        print(f"✅ Posted with media: {topic}")
+    else:
+        api.update_status(tweet_text)
+        print(f"✅ Posted text: {topic}")
 
-def post_tweet():
-    caption, topic = build_caption()
-    media_path = select_media(topic)
-
-    try:
-        if media_path and media_path.lower().endswith((".jpg", ".jpeg", ".png", ".gif", ".mp4")):
-            uploaded = api_v1.media_upload(media_path)
-            client.create_tweet(text=caption, media_ids=[uploaded.media_id])
-            print(f"✅ [{datetime.now().strftime('%H:%M')}] Posted: {topic}")
-        else:
-            client.create_tweet(text=caption)
-            print(f"✅ [{datetime.now().strftime('%H:%M')}] Posted text about: {topic}")
-    except Exception as e:
-        print("❌ Error posting:", e)
-
-# Schedule: every 48 minutes (~30/day)
-schedule.every(48).minutes.do(post_tweet)
-
-print("🤖 DecipherLabX OAuth 2.0 bot started...")
-post_tweet()  # immediate post
-
-while True:
-    schedule.run_pending()
-    time.sleep(30)
+except Exception as e:
+    print("❌ Error posting tweet:", e)
