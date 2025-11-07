@@ -1,5 +1,5 @@
-schedule
-pytrends
 tweepy
+schedule
 requests
 python-dotenv
+pytrends
