@@ -9,6 +9,9 @@ load_dotenv()
 
 def main():
     print("🚀 DecipherLabX Internet Bot Starting (OAuth 2.0)...")
+from dotenv import load_dotenv
+load_dotenv()
+
 
     while True:
         topics = get_trending_topics()
