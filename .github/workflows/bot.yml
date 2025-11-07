@@ -24,15 +24,14 @@ jobs:
           pip install -r requirements.txt || true
           pip install python-dotenv pytrends schedule tweepy requests || true
 
-      - name: Run bot
+      - name: Run DecipherLabX Bot
+        run: |
+          echo "Running DecipherLabX Bot..."
+          python main.py
         env:
           CONSUMER_KEY: ${{ secrets.CONSUMER_KEY }}
           CONSUMER_SECRET: ${{ secrets.CONSUMER_SECRET }}
           ACCESS_TOKEN: ${{ secrets.ACCESS_TOKEN }}
           ACCESS_TOKEN_SECRET: ${{ secrets.ACCESS_TOKEN_SECRET }}
-      - name: Run DecipherLabX Bot
-        run: |
-          echo "Running DecipherLabX Bot..."
-          python main.py
-          env:
-    OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}   # <--- added here
+
