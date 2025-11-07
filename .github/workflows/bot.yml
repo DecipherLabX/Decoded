@@ -1,32 +1,32 @@
-name: DecipherLabX Bot
+name: Run DecipherLabX Bot
 
 on:
   schedule:
-    - cron: "*/48 * * * *"   # every 48 minutes (~30 posts/day)
-  workflow_dispatch:          # allows manual run
+    - cron: "0 * * * *"  # runs every hour
+  workflow_dispatch:     # allows manual trigger
 
 jobs:
   run-bot:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout repo
+      - name: Checkout repository
         uses: actions/checkout@v4
 
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
-          python-version: "3.11"
+          python-version: "3.12"
 
- - name: Install dependencies
-   run: |
-    python -m pip install --upgrade pip
-    pip install -r requirements.txt
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
 
-      - name: Run DecipherLabX Bot
+      - name: Run bot
         env:
           CONSUMER_KEY: ${{ secrets.CONSUMER_KEY }}
           CONSUMER_SECRET: ${{ secrets.CONSUMER_SECRET }}
           ACCESS_TOKEN: ${{ secrets.ACCESS_TOKEN }}
-          ACCESS_TOKEN_SECRET: ${{ secrets.ACCESS_TOKEN_SECRET }}
+          ACCESS_SECRET: ${{ secrets.ACCESS_SECRET }}
         run: python DecipherLabX.py
