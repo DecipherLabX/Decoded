@@ -32,4 +32,4 @@ jobs:
           ACCESS_TOKEN_SECRET: ${{ secrets.ACCESS_TOKEN_SECRET }}
         run: |
           echo "Running DecipherLabX Bot..."
-          python DecipherLabX.py
+          python main.py
