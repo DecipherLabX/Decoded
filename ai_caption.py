@@ -1,10 +1,12 @@
-import os, openai
+from openai import OpenAI
+client = OpenAI()
 
 def generate_caption(topic):
-    openai.api_key = os.getenv("OPENAI_API_KEY")
-    prompt = f"Write a short, catchy tweet under 250 characters about '{topic}' with 2 trending hashtags."
-    response = openai.ChatCompletion.create(
+    completion = client.chat.completions.create(
         model="gpt-3.5-turbo",
-        messages=[{"role": "user", "content": prompt}]
+        messages=[
+            {"role": "system", "content": "You are a creative AI bot."},
+            {"role": "user", "content": f"Write a catchy tweet caption about {topic}."}
+        ]
     )
-    return response["choices"][0]["message"]["content"].strip()
+    return completion.choices[0].message.content

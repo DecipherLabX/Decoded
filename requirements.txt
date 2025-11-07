@@ -3,3 +3,4 @@ python-dotenv
 requests
 openai
 Pillow
+openai==0.28
