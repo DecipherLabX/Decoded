@@ -33,3 +33,5 @@ jobs:
         run: |
           echo "Running DecipherLabX Bot..."
           python main.py
+          env:
+    OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
