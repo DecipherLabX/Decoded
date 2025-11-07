@@ -1,4 +1,4 @@
 tweepy
-python-dotenv
-pytrends
+schedule
 requests
+python-dotenv
