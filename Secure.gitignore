@@ -1,1 +1,2 @@
-.env
+*.env
+DecipherLabX0.env
