@@ -1,5 +1,4 @@
-tweepy
 schedule
-requests
-python-dotenv
 pytrends
+tweepy
+requests
