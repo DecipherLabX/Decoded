@@ -2,3 +2,4 @@ tweepy
 schedule
 requests
 python-dotenv
+pytrends
